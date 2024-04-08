@@ -29,13 +29,6 @@ func getTestParcel() Parcel {
 	}
 }
 
-func TestConnection(t *testing.T) {
-	// prepare
-	db, err := sql.Open("sqlite", "tracker.db")
-	require.NoError(t, err)
-	defer db.Close()
-}
-
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
 	// prepare
@@ -57,11 +50,8 @@ func TestAddGetDelete(t *testing.T) {
 	p, err := store.Get(id)
 	require.NoError(t, err)
 	require.NotEmpty(t, p)
-	assert.Equal(t, id, p.Number)
-	assert.Equal(t, parcel.Client, p.Client)
-	assert.Equal(t, parcel.Status, p.Status)
-	assert.Equal(t, parcel.Address, p.Address)
-	assert.Equal(t, parcel.CreatedAt, p.CreatedAt)
+	parcel.Number = id
+	assert.Equal(t, parcel, p)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
@@ -70,7 +60,7 @@ func TestAddGetDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	p, err = store.Get(id)
-	require.Error(t, err, sql.ErrNoRows)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 	require.Empty(t, p)
 }
 
@@ -101,7 +91,7 @@ func TestSetAddress(t *testing.T) {
 	p, err := store.Get(id)
 	require.NoError(t, err)
 	require.NotEmpty(t, p)
-	assert.Equal(t, p.Address, newAddress)
+	assert.Equal(t, newAddress, p.Address)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -130,7 +120,7 @@ func TestSetStatus(t *testing.T) {
 	p, err := store.Get(id)
 	require.NoError(t, err)
 	require.NotEmpty(t, p)
-	assert.Equal(t, p.Status, newStatus)
+	assert.Equal(t, newStatus, p.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -174,7 +164,7 @@ func TestGetByClient(t *testing.T) {
 	// убедитесь в отсутствии ошибки
 	// убедитесь, что количество полученных посылок совпадает с количеством добавленных
 	require.NoError(t, err)
-	require.Equal(t, len(storedParcels), len(parcels))
+	require.Equal(t, len(parcels), len(storedParcels))
 
 	// check
 	for _, parcel := range storedParcels {
@@ -182,9 +172,6 @@ func TestGetByClient(t *testing.T) {
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
 		require.Contains(t, parcelMap, parcel.Number)
-		assert.Equal(t, parcel.Address, parcelMap[parcel.Number].Address)
-		assert.Equal(t, parcel.Client, parcelMap[parcel.Number].Client)
-		assert.Equal(t, parcel.Status, parcelMap[parcel.Number].Status)
-		assert.Equal(t, parcel.CreatedAt, parcelMap[parcel.Number].CreatedAt)
+		assert.Equal(t, parcelMap[parcel.Number], parcel)
 	}
 }
